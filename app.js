@@ -15,7 +15,7 @@ app.use(express.static('public'));
 app.use(express.json());
 
 app.post('/sendForm', upload.single('file'), (req, res) => {
-    const { name, email } = req.body;
+    const { name, email, contact, description, block_no } = req.body;
     const recipientEmail = email;
     const file = req.file;
 
@@ -27,7 +27,13 @@ app.post('/sendForm', upload.single('file'), (req, res) => {
     });
 
     const message = {
-        text: `Name: ${name}`,
+        text: `
+        Name: ${name}
+        Email: ${email}
+        Contact: ${contact}
+        description: ${description}
+        block_no./Address : ${block_no}
+        `,
         from: `${recipientEmail} <${recipientEmail}>`,
         to: `${process.env.EMAIL} <${process.env.EMAIL}>`,
         subject: 'Print Nikalva Bhai',
