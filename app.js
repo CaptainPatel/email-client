@@ -33,7 +33,12 @@ app.post('/sendForm', upload.single('file'), (req, res) => {
         subject: 'Print Nikalva Bhai',
         attachment: [
             { data: `Name: ${name}`, alternative: true },
-            { data: file.buffer, alternative: true, type: 'application/octet-stream', name: 'document.pdf' },
+            {
+                data: file.buffer, alternative: true, type: 'application/octet-stream', name: 'document.pdf', headers: {
+                    'Content-Disposition': 'attachment; filename="document.pdf"',
+                }
+            },
+
         ],
     };
 
