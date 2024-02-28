@@ -15,7 +15,8 @@ app.use(express.static('public'));
 app.use(express.json());
 
 app.post('/sendForm', upload.single('file'), (req, res) => {
-    const { name, email, contact, description, block_no } = req.body;
+    console.log("idhar aagya");
+    const { name, email, contact, description, block_no, room_no, products, price } = req.body;
     const recipientEmail = email;
     const file = req.file;
 
@@ -26,25 +27,50 @@ app.post('/sendForm', upload.single('file'), (req, res) => {
         ssl: true,
     });
 
+    // Build the text content of the email
+    let emailText = `Name: ${name}\nEmail: ${email}\n`;
+
+    if (contact) {
+        emailText += `Contact: ${contact}\n`;
+    }
+
+    if (description) {
+        emailText += `Description: ${description}\n`;
+    }
+
+    if (block_no) {
+        emailText += `Block No./Address: ${block_no}\n`;
+    }
+
+    if (room_no) {
+        emailText += `Room No.: ${room_no}\n`;
+    }
+
+    if (Array.isArray(products) && products.length > 0) {
+        const formattedProducts = products.map(product => `- ${product}`).join(' | ');
+        emailText += `Products: ${formattedProducts}\n`;
+    }
+
+    if (price) {
+        emailText += `Price: ${price}\n`;
+    }
+
     const message = {
-        text: `
-        Name: ${name}
-        Email: ${email}
-        Contact: ${contact}
-        description: ${description}
-        block_no./Address : ${block_no}
-        `,
+        text: emailText,
         from: `${recipientEmail} <${recipientEmail}>`,
         to: `${process.env.EMAIL} <${process.env.EMAIL}>`,
-        subject: 'Print Nikalva Bhai',
+        subject: 'jaldhi kar',
         attachment: [
             { data: `Name: ${name}`, alternative: true },
             {
-                data: file.buffer, alternative: true, type: 'application/octet-stream', name: 'document.pdf', headers: {
+                data: file?.buffer || '', // Check if file is present
+                alternative: true,
+                type: 'application/octet-stream',
+                name: 'document.pdf',
+                headers: {
                     'Content-Disposition': 'attachment; filename="document.pdf"',
                 }
             },
-
         ],
     };
 
