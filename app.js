@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { SMTPClient } from 'emailjs';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,18 +14,18 @@ const upload = multer({ storage });
 app.use(express.static('public'));
 app.use(express.json());
 
-app.post('/sendForm', upload.single('file'), (req, res) => {
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+    },
+});
+
+app.post('/sendForm', upload.single('file'), async (req, res) => {
     console.log("idhar aagya");
     const { name, email, contact, description, block_no, room_no, products, price } = req.body;
-    const recipientEmail = email;
     const file = req.file;
-
-    const client = new SMTPClient({
-        user: process.env.EMAIL,
-        password: process.env.PASSWORD,
-        host: 'smtp.gmail.com',
-        ssl: true,
-    });
 
     // Build the text content of the email
     let emailText = `Name: ${name}\nEmail: ${email}\n`;
@@ -55,34 +55,27 @@ app.post('/sendForm', upload.single('file'), (req, res) => {
         emailText += `Price: ${price}\n`;
     }
 
-    const message = {
-        text: emailText,
-        from: `${recipientEmail} <${recipientEmail}>`,
-        to: `${process.env.EMAIL} <${process.env.EMAIL}>`,
+    const mailOptions = {
+        from: process.env.EMAIL,
+        to: process.env.EMAIL,
         subject: 'jaldhi kar',
-        attachment: [
-            { data: `Name: ${name}`, alternative: true },
+        text: emailText,
+        attachments: [
             {
-                data: file?.buffer || '', // Check if file is present
-                alternative: true,
-                type: 'application/octet-stream',
-                name: 'document.pdf',
-                headers: {
-                    'Content-Disposition': 'attachment; filename="document.pdf"',
-                }
-            },
+                filename: 'document.pdf',
+                content: file?.buffer || "",
+            }
         ],
     };
 
-    client.send(message, function (err, message) {
-        if (err) {
-            console.error(err);
-            res.status(500).json({ message: 'Error sending email' });
-        } else {
-            console.log('Email sent:', message);
-            res.status(200).json({ message: 'File uploaded and email sent successfully' });
-        }
-    });
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email sent');
+        res.status(200).json({ message: 'File uploaded and email sent successfully' });
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ message: 'Error sending email' });
+    }
 });
 
 app.listen(port, () => {
